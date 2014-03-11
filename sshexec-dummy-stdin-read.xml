@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="ssh-dummy-stdin-read" default="test">
+    <property file="conf/sshexec.properties" />
+
+    <property name="tail.log" value="/tmp/tail.log" />
+    <property name="read.log" value="/tmp/read.log" />
+
+    <import file="macros/make-bash-nohup-dummy-stdin-read-command.xml" />
+
+    <target name="test" depends="view.read.log">
+    <!--target name="test" depends="view.tail.log" -->
+    </target>
+
+
+    <target name="exec.read">
+        <local name="exec.nohup" />
+        <local name="nohup.command" />
+        <local name="named.pipe" />
+
+        <property name="named.pipe" value="/tmp/xxxx" />
+        <property name="nohup.command">
+            <![CDATA[ cd $HOME/work/shell && cat ${named.pipe} | ./readWrapper.sh]]>
+        </property>
+        <makeBashNohupDummyStdinReadCommand
+            nohupCommand="exec.nohup"
+            nohupProcess="${nohup.command}"
+            nohupProcessLog="${read.log}"
+            nohupProcessStartKeyword="Enter"
+            nohupProcessStartCheckInterval="2"
+            dummyStdinNamedPipe="${named.pipe}" />
+
+
+        <sshexec
+            host="${ssh.host}"
+            port="${ssh.port}"
+            username="${ssh.user}"
+            passphrase="${ssh.passphrase}"
+            trust="yes"
+            command="${exec.nohup}"
+            keyfile="${ssh.keyfile}"
+            outputproperty="read.pty" 
+            usepty="yes"
+            failonerror="yes"
+            append="yes" />
+        <echo message="exec process : ${read.pty}" />
+    </target>
+
+    <target name="view.read.log" depends="exec.read">
+        <sshexec
+            host="${ssh.host}"
+            port="${ssh.port}"
+            username="${ssh.user}"
+            passphrase="${ssh.passphrase}"
+            trust="yes"
+            command="cat ${read.log}"
+            keyfile="${ssh.keyfile}"
+            failonerror="yes" />
+    </target>
+
+
+
+</project>

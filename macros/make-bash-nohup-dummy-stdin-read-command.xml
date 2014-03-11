@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project>
+    <macrodef name="makeBashNohupDummyStdinReadCommand">
+        <attribute name="nohupCommand" />
+        <attribute name="nohupProcess" />
+        <attribute name="nohupProcessLog" />
+        <attribute name="dummyStdinNamedPipe" />
+        <attribute name="dummyStdinWriterPid" default="@{dummyStdinNamedPipe}.pid" />
+        <attribute name="nohupProcessStartKeyword" default="start" />
+        <attribute name="nohupProcessStartCheckInterval" default="2" />
+
+        <sequential>
+            <property name="@{nohupCommand}">
+<![CDATA[
+test ! -e @{dummyStdinNamedPipe} && mkfifo @{dummyStdinNamedPipe};
+nohup /bin/bash -l -c "cat > @{dummyStdinNamedPipe}" >/dev/null 2>&1 &
+echo $! > @{dummyStdinWriterPid} ;
+nohup /bin/bash -l -c "function debug() { echo $@@ ; } ; export -f debug ; @{nohupProcess}" > @{nohupProcessLog} 2>&1 & 
+_NOHUP_PROCESS_PID=$! ;
+while true ; do sleep @{nohupProcessStartCheckInterval} && grep "@{nohupProcessStartKeyword}" @{nohupProcessLog} >/dev/null 2>&1 && break ; done ;
+_NOHUP_CHILD_PID=`ps -o pid --ppid $_NOHUP_PROCESS_PID --no-headers | sed -e 's/ //g' | xargs echo` ;
+ps -o pid --ppid $_NOHUP_CHILD_PID --ppid $_NOHUP_PROCESS_PID --pid $_NOHUP_CHILD_PID --pid $_NOHUP_PROCESS_PID --no-headers | sed -e 's/ //g' | sort -r | xargs echo ;
+]]>
+            </property>
+        </sequential>
+    </macrodef>
+
+</project>
