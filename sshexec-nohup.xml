@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="ssh-nohup-to-kill-sample" default="test">
+    <property file="conf/sshexec.properties" />
+
+    <property name="tail.log" value="/tmp/tail.log" />
+    <property name="read.log" value="/tmp/read.log" />
+
+    <target name="exec.tail">
+        <local name="exec.nohup" />
+        <local name="process.start.log"/>
+
+        <property name="process.start.log" value="Ctrl-C" />
+        <property name="exec.nohup">
+        <![CDATA[
+        nohup /bin/bash -l -c "function debug() { echo $@ ; } ; export -f debug ; cd $HOME/work/shell && echo yes | ./tailWrapper.sh" > ${tail.log} 2>&1  & 
+        NOHUP_PID=${!}
+        sleep 3
+        LOG_CRAWLER_PID=`ps -o pid --ppid ${NOHUP_PID} --no-headers | sed -e 's/ //g' | xargs echo`
+        while true ; do sleep 1 && grep -E "${process.start.log}" ${tail.log} >/dev/null 2>&1 && break ; done
+        # output log_crawler pid or crawler_subprocess pid
+        ps -o pid --ppid ${LOG_CRAWLER_PID} --pid ${LOG_CRAWLER_PID} --no-headers | sed -e 's/ //g' | xargs echo
+        ]]>
+        </property>
+
+        <sshexec
+            host="${ssh.host}"
+            port="${ssh.port}"
+            username="${ssh.user}"
+            passphrase="${ssh.passphrase}"
+            trust="yes"
+            command="${exec.nohup}"
+            keyfile="${ssh.keyfile}"
+            outputproperty="tail.pid" 
+            failonerror="yes"
+            append="yes" />
+        <echo message="exec process : ${tail.pid}" />
+    </target>
+
+    <target name="view.tail.log" depends="exec.tail">
+        <sshexec
+            host="${ssh.host}"
+            port="${ssh.port}"
+            username="${ssh.user}"
+            passphrase="${ssh.passphrase}"
+            trust="yes"
+            command="cat ${tail.log}"
+            keyfile="${ssh.keyfile}"
+            failonerror="yes" />
+    </target>
+
+    <!--target name="test" depends="view.read.log, view.tail.log" -->
+    <target name="test" depends="view.read.log" >
+    </target>
+
+
+    <target name="exec.read">
+        <local name="exec.nohup" />
+        <local name="process.start.log"/>
+
+        <property name="process.start.log" value="Enter" />
+        <property name="exec.nohup">
+        <![CDATA[
+        nohup /bin/bash -l -c "function debug() { echo $@ ; } ; export -f debug ; cd $HOME/work/shell && echo yes | ./readWrapper.sh" > ${read.log} 2>&1  & 
+        NOHUP_PID=${!}
+        sleep 3
+        while true ; do sleep 1 && grep -E "${process.start.log}" ${read.log} >/dev/null 2>&1 && break ; done
+        ]]>
+        </property>
+
+        <sshexec
+            host="${ssh.host}"
+            port="${ssh.port}"
+            username="${ssh.user}"
+            passphrase="${ssh.passphrase}"
+            trust="yes"
+            command="${exec.nohup}"
+            keyfile="${ssh.keyfile}"
+            outputproperty="read.pty" 
+            usepty="yes"
+            failonerror="yes"
+            append="yes" />
+        <echo message="exec process : ${read.pty}" />
+    </target>
+
+    <target name="view.read.log" depends="exec.read">
+        <sshexec
+            host="${ssh.host}"
+            port="${ssh.port}"
+            username="${ssh.user}"
+            passphrase="${ssh.passphrase}"
+            trust="yes"
+            command="cat ${read.log}"
+            keyfile="${ssh.keyfile}"
+            failonerror="yes" />
+    </target>
+
+
+
+</project>
