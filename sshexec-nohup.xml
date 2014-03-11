@@ -5,22 +5,19 @@
     <property name="tail.log" value="/tmp/tail.log" />
     <property name="read.log" value="/tmp/read.log" />
 
+    <import file="macros/make-bash-nohup-command.xml" />
+
     <target name="exec.tail">
         <local name="exec.nohup" />
-        <local name="process.start.log"/>
-
-        <property name="process.start.log" value="Ctrl-C" />
-        <property name="exec.nohup">
-        <![CDATA[
-        nohup /bin/bash -l -c "function debug() { echo $@ ; } ; export -f debug ; cd $HOME/work/shell && echo yes | ./tailWrapper.sh" > ${tail.log} 2>&1  & 
-        NOHUP_PID=${!}
-        sleep 3
-        LOG_CRAWLER_PID=`ps -o pid --ppid ${NOHUP_PID} --no-headers | sed -e 's/ //g' | xargs echo`
-        while true ; do sleep 1 && grep -E "${process.start.log}" ${tail.log} >/dev/null 2>&1 && break ; done
-        # output log_crawler pid or crawler_subprocess pid
-        ps -o pid --ppid ${LOG_CRAWLER_PID} --pid ${LOG_CRAWLER_PID} --no-headers | sed -e 's/ //g' | xargs echo
-        ]]>
+        <property name="nohup.process" >
+            <![CDATA[ cd $HOME/work/shell && echo yes | ./tailWrapper.sh ]]>
         </property>
+        <makeBashNohupCommand
+            nohupCommand="exec.nohup"
+            nohupProcess="${nohup.process}" 
+            nohupProcessLog="${tail.log}"
+            nohupProcessStartKeyword="Ctrl+C"
+            nohupProcessStartCheckInterval="2" />
 
         <sshexec
             host="${ssh.host}"
@@ -48,8 +45,8 @@
             failonerror="yes" />
     </target>
 
-    <!--target name="test" depends="view.read.log, view.tail.log" -->
-    <target name="test" depends="view.read.log" >
+    <!--target name="test" depends="view.read.log" -->
+    <target name="test" depends="view.tail.log">
     </target>
 
 
