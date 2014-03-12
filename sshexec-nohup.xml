@@ -3,9 +3,9 @@
     <property file="conf/sshexec.properties" />
 
     <property name="tail.log" value="/tmp/tail.log" />
-    <property name="read.log" value="/tmp/read.log" />
 
     <import file="macros/make-bash-nohup-command.xml" />
+    <import file="macros/make-kill-command.xml" />
 
     <target name="exec.tail">
         <local name="exec.nohup" />
@@ -29,9 +29,10 @@
             failonerror="yes"
             append="yes" />
         <echo message="exec process : ${tail.pid}" />
+        <property name="kill.pid" value="${tail.pid}" />
     </target>
 
-    <target name="view.tail.log" depends="exec.tail">
+    <target name="view.tail.log">
         <sshexec
             host="${ssh.host}"
             port="${ssh.port}"
@@ -43,24 +44,11 @@
             failonerror="yes" />
     </target>
 
-    <!--target name="test" depends="view.read.log" -->
-    <target name="test" depends="view.tail.log">
-    </target>
-
-
-    <target name="exec.read">
-        <local name="exec.nohup" />
-        <local name="process.start.log"/>
-
-        <property name="process.start.log" value="Enter" />
-        <property name="exec.nohup">
-        <![CDATA[
-        nohup /bin/bash -l -c "function debug() { echo $@ ; } ; export -f debug ; cd $HOME/work/shell && echo yes | ./readWrapper.sh" > ${read.log} 2>&1  & 
-        NOHUP_PID=${!}
-        sleep 3
-        while true ; do sleep 1 && grep -E "${process.start.log}" ${read.log} >/dev/null 2>&1 && break ; done
-        ]]>
-        </property>
+    <target name="kill.process">
+        <local name="exec.kill" />
+        <makeKillCommand
+            outputproperty="exec.kill"
+            processArgs="${tail.pid}" />
 
         <sshexec
             host="${ssh.host}"
@@ -68,27 +56,20 @@
             username="${ssh.user}"
             passphrase="${ssh.passphrase}"
             trust="yes"
-            command="${exec.nohup}"
+            command="${exec.kill}"
             keyfile="${ssh.keyfile}"
-            outputproperty="read.pty" 
-            usepty="yes"
             failonerror="yes"
             append="yes" />
-        <echo message="exec process : ${read.pty}" />
+
+    </target> 
+
+    <target name="test">
+      <sequential>
+        <antcall target="exec.tail" />
+        <antcall target="view.tail.log" />
+        <antcall target="kill.process" />
+        <antcall target="view.tail.log" />
+      </sequential>
     </target>
-
-    <target name="view.read.log" depends="exec.read">
-        <sshexec
-            host="${ssh.host}"
-            port="${ssh.port}"
-            username="${ssh.user}"
-            passphrase="${ssh.passphrase}"
-            trust="yes"
-            command="cat ${read.log}"
-            keyfile="${ssh.keyfile}"
-            failonerror="yes" />
-    </target>
-
-
 
 </project>
