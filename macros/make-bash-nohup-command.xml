@@ -1,19 +1,21 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <project>
     <macrodef name="makeBashNohupCommand">
-        <attribute name="nohupCommand" />
-        <attribute name="nohupProcess" />
-        <attribute name="nohupProcessLog" />
-        <attribute name="nohupProcessStartKeyword" default="start" />
-        <attribute name="nohupProcessStartCheckInterval" default="2" />
+        <attribute name="outputproperty" />
+        <attribute name="process" />
+        <attribute name="processLog" />
+        <attribute name="processDir" default="$HOME" />
+        <attribute name="processArgs" default="" />
+        <attribute name="processStartKeyword" default="start" />
+        <attribute name="processStartCheckInterval" default="2" />
 
         <sequential>
-            <property name="@{nohupCommand}">
+            <property name="@{outputproperty}">
 <![CDATA[
-nohup /bin/bash -l -c "function debug() { echo $@@ ; } ; export -f debug ; @{nohupProcess}" > @{nohupProcessLog} 2>&1 & 
+nohup /bin/bash -l -c "function debug() { echo $@@ ; } ; export -f debug ; cd @{processDir} ; @{process} @{processArgs}" > @{processLog} 2>&1 & 
 _NOHUP_PROCESS_PID=$! ;
-while true ; do sleep @{nohupProcessStartCheckInterval} && grep "@{nohupProcessStartKeyword}" @{nohupProcessLog} >/dev/null 2>&1 && break ; done ;
-_NOHUP_CHILD_PID=`ps -o pid --ppid $_NOHUP_PROCESS_PID --no-headers | sed -e 's/ //g' | xargs echo` ;
+while true ; do sleep @{processStartCheckInterval} && grep "@{processStartKeyword}" @{processLog} >/dev/null 2>&1 && break ; done ;
+_NOHUP_CHILD_PID=`ps -o pid --ppid $_NOHUP_PROCESS_PID --no-headers | sed -e 's/ //g' | xargs echo | sed -e 's/ /,/g'` ;
 ps -o pid --ppid $_NOHUP_CHILD_PID --ppid $_NOHUP_PROCESS_PID --pid $_NOHUP_CHILD_PID --pid $_NOHUP_PROCESS_PID --no-headers | sed -e 's/ //g' | sort -r | xargs echo ;
 ]]>
             </property>

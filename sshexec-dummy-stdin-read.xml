@@ -14,21 +14,17 @@
 
     <target name="exec.read">
         <local name="exec.nohup" />
-        <local name="nohup.command" />
         <local name="named.pipe" />
 
         <property name="named.pipe" value="/tmp/xxxx" />
-        <property name="nohup.command">
-            <![CDATA[ cd $HOME/work/shell && cat ${named.pipe} | ./readWrapper.sh]]>
-        </property>
-        <makeBashNohupDummyStdinReadCommand
-            nohupCommand="exec.nohup"
-            nohupProcess="${nohup.command}"
-            nohupProcessLog="${read.log}"
-            nohupProcessStartKeyword="Enter"
-            nohupProcessStartCheckInterval="2"
-            dummyStdinNamedPipe="${named.pipe}" />
-
+        <makeBashNohupStdinReadCommand
+            outputproperty="exec.nohup"
+            process="./readWrapper.sh"
+            processDir="$HOME/work/shell"
+            processLog="${read.log}"
+            processStartKeyword="Enter"
+            processStartCheckInterval="2"
+            namedPipe="${named.pipe}" />
 
         <sshexec
             host="${ssh.host}"

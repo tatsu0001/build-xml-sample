@@ -9,15 +9,13 @@
 
     <target name="exec.tail">
         <local name="exec.nohup" />
-        <property name="nohup.process" >
-            <![CDATA[ cd $HOME/work/shell && echo yes | ./tailWrapper.sh ]]>
-        </property>
         <makeBashNohupCommand
-            nohupCommand="exec.nohup"
-            nohupProcess="${nohup.process}" 
-            nohupProcessLog="${tail.log}"
-            nohupProcessStartKeyword="Ctrl+C"
-            nohupProcessStartCheckInterval="2" />
+            outputproperty="exec.nohup"
+            process="echo yes | ./tailWrapper.sh" 
+            processDir="$HOME/work/shell"
+            processLog="${tail.log}"
+            processStartKeyword="Ctrl+C"
+            processStartCheckInterval="2" />
 
         <sshexec
             host="${ssh.host}"
