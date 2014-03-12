@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project>
+    <macrodef name="makeKillCommand">
+        <attribute name="outputproperty" />
+        <attribute name="process" default="kill"/>
+        <attribute name="processDir" default="$HOME" />
+        <attribute name="processArgs" />
+
+        <sequential>
+            <property name="@{outputproperty}">
+<![CDATA[
+PIDS=`echo @{processArgs} | tr -d '\r' | tr -d '\n'` ;
+echo "-- kill target processes. --" ;
+echo $PIDS | sed -e 's/ /,/g' | xargs -i ps -o pid,command --pid {};
+echo "----" ;
+kill $PIDS ;
+]]>
+            </property>
+        </sequential>
+    </macrodef>
+</project>
