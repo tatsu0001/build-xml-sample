@@ -3,6 +3,8 @@
     <property file="conf/sshexec.properties" />
 
     <property name="tail.log" value="/tmp/tail.log" />
+    <property name="tmp.dir" value="${basedir}/tmp" />
+    <property name="tail.pid.file" value="${tmp.dir}/pid" />
 
     <import file="macros/make-bash-nohup-command.xml" />
     <import file="macros/make-kill-command.xml" />
@@ -29,7 +31,9 @@
             failonerror="yes"
             append="yes" />
         <echo message="exec process : ${tail.pid}" />
-        <property name="kill.pid" value="${tail.pid}" />
+
+        <mkdir dir="${tmp.dir}" />
+        <echo message="pid=${tail.pid}" file="${tail.pid.file}" />
     </target>
 
     <target name="view.tail.log">
@@ -46,9 +50,11 @@
 
     <target name="kill.process">
         <local name="exec.kill" />
+
+        <property file="${tail.pid.file}" />
         <makeKillCommand
             outputproperty="exec.kill"
-            processArgs="${tail.pid}" />
+            processArgs="${pid}" />
 
         <sshexec
             host="${ssh.host}"
