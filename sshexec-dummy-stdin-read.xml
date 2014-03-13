@@ -2,21 +2,20 @@
 <project name="ssh-dummy-stdin-read" default="test">
     <property file="conf/sshexec.properties" />
 
-    <property name="tail.log" value="/tmp/tail.log" />
-    <property name="read.log" value="/tmp/read.log" />
+    <property name="id" value="miya0001" />
+    <property name="read.log" value="/tmp/read.${id}.log" />
+    <property name="named.pipe" value="/tmp/namedPipe.${id}" />
 
     <import file="macros/make-bash-nohup-dummy-stdin-read-command.xml" />
 
-    <target name="test" depends="view.read.log">
-    <!--target name="test" depends="view.tail.log" -->
+    <target name="test">
+        <antcall target="exec.read" />
+        <antcall target="view.read.log" />
+        <antcall target="input.enter" />
+        <antcall target="view.read.log" />
     </target>
 
-
     <target name="exec.read">
-        <local name="exec.nohup" />
-        <local name="named.pipe" />
-
-        <property name="named.pipe" value="/tmp/xxxx" />
         <makeBashNohupStdinReadCommand
             outputproperty="exec.nohup"
             process="./readWrapper.sh"
@@ -41,7 +40,7 @@
         <echo message="exec process : ${read.pty}" />
     </target>
 
-    <target name="view.read.log" depends="exec.read">
+    <target name="view.read.log">
         <sshexec
             host="${ssh.host}"
             port="${ssh.port}"
@@ -53,6 +52,22 @@
             failonerror="yes" />
     </target>
 
+    <target name="input.enter">
+        <input message="input enter to finish:" />
+        <property name="dummy.enter">
+            echo > ${named.pipe}
+        </property>
+
+        <sshexec
+            host="${ssh.host}"
+            port="${ssh.port}"
+            username="${ssh.user}"
+            passphrase="${ssh.passphrase}"
+            trust="yes"
+            command="${dummy.enter}"
+            keyfile="${ssh.keyfile}"
+            failonerror="yes" />
+    </target>
 
 
 </project>
