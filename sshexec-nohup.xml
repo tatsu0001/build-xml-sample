@@ -54,7 +54,8 @@
         <property file="${tail.pid.file}" />
         <makeKillCommand
             outputproperty="exec.kill"
-            processArgs="${pid}" />
+            processArgs="${pid}"
+            exclude="tailWrapper"  />
 
         <sshexec
             host="${ssh.host}"

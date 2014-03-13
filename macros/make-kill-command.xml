@@ -5,15 +5,20 @@
         <attribute name="process" default="kill"/>
         <attribute name="processDir" default="$HOME" />
         <attribute name="processArgs" />
+        <attribute name="exclude" default="" />
 
         <sequential>
             <property name="@{outputproperty}">
 <![CDATA[
-PIDS=`echo @{processArgs} | tr -d '\r' | tr -d '\n'` ;
+PIDS="@{processArgs}" ;
+if [ ! -z "@{exclude}" ]; then PIDS=`echo $PIDS | sed -e 's/ /,/g' | xargs -i ps -o pid,command --noheaders --pid {} | grep -v "@{exclude}" | awk '{print $1}' | sed -e 's/ //g' | xargs echo`; fi;
+
 echo "-- kill target processes. --" ;
 echo $PIDS | sed -e 's/ /,/g' | xargs -i ps -o pid,command --pid {};
 echo "----" ;
-kill $PIDS ;
+echo "do kill $PIDS"
+
+kill -s SIGTERM $PIDS ;
 ]]>
             </property>
         </sequential>
